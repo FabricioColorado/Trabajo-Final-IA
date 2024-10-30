@@ -1,8 +1,26 @@
 from django.shortcuts import render
 from joblib import load
-model = load("./model/iris_model.joblib")
+from django.conf import settings
+import json 
+import os 
+# model = load("./model/iris_model.joblib")
 def index(request):
-    return render(request, 'index.html')
+    with open('data/data.json') as f:
+        data = json.load(f)
+    items = [
+        {
+            "id": index + 1,  # Generamos un ID único comenzando desde 1
+            "CodInterno": item["Cod. Interno"],
+            "Nombre": item["Nombre"],
+            "Categoria": item["Categoria"],
+            "PrecioVenta": item["Precio de venta"],
+            "GananciaTotal": item["Ganancia Total"],
+            "Marca": item["Marca"],
+            "Modelo": item["Modelo"]
+        }
+        for index, item in enumerate(data)  
+    ]
+    return render(request, 'index.html', {'data': items})
 
 def Clasificador(request):
     return render(request, 'clasificador.html')
