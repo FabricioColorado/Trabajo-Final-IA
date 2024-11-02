@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div>
+        {% if response %}
+            <h1>Datos recibidos:</h1>
+            <ul>
+                <li><strong>Dinero Disponible:</strong> {{ response.dinero_disponible }}</li>
+                <li><strong>Marca:</strong> {{ response.marca }}</li>
+                <li><strong>Modelo:</strong> {{ response.modelo }}</li>
+            </ul>
+        {% endif %}
+    </div>
+    
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    {{response}}
+    {%if response%}
+        <h1>La respues es {{response}}</h1>
+    {%endif%}
+    
+</body>
+</html>

@@ -55,21 +55,23 @@
                 </div>
                 <div>
                     <form action="/clasificarData" method="POST">
+                        {% csrf_token %}
                         <div class="mb-3">
                             <label for="precioVenta" class="form-label">Dinero Disponible</label>
-                            <input type="number" class="form-control" id="precioVenta" name="precioVenta" placeholder="500" required>
+                            <input type="number" class="form-control" id="precioVenta" name="dinero_disponible" placeholder="500" required>
                         </div>
                         <div class="mb-3">
                             <label for="marca" class="form-label">Marca</label> <br>
                             <select name="marca" id="marca"  style="width: 100%" class="form-select" required>
-                                <option value="">Selecciona una marca</option>
+                                <option value="">Selecciona una marca</option>ls
+
                                 <option value="NAC">Nacional</option>
                                 <option value="IMP">importado</option>
                             </select>
                         </div>
                         <div class="mb-3">
                             <label for="modelo" class="form-label">Modelo</label>
-                            <input type="text" class="form-control" id="modelo" placeholder="GOURMET" required>
+                            <input type="text" class="form-control" id="modelo" name="modelo" placeholder="GOURMET" required>
                         </div>
                         <div class="mb-3">
                             <button type="submit" class="btn btn-success" style="width: 100%">Enviar</button>
