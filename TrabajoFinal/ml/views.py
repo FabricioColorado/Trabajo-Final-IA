@@ -94,5 +94,5 @@ def formularioClasificador(request):
         except Exception as e:
             return render(request, "resultadoClasificador.html", {"error": "Ocurrió un error inesperado: " + str(e)})
 
-    return render(request, "clasificador.html")
+    return render(request, "resultadoClasificador.html")
 

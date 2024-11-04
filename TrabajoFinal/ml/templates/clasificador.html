@@ -58,7 +58,7 @@
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="precioVenta" class="form-label">Dinero Disponible</label>
-                            <input type="number" class="form-control" id="precioVenta" name="dinero_disponible" placeholder="500" required>
+                            <input type="number" class="form-control" id="precioVenta" name="dinero_disponible" placeholder="500" min=150 required>
                         </div>
                         <div class="mb-3">
                             <label for="marca" class="form-label">Marca</label> <br>
