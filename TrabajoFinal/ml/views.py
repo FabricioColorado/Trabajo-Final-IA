@@ -3,15 +3,18 @@ from joblib import load
 from django.conf import settings
 import json 
 import os 
-model = load("./model/modelo.joblib")
-le_marca = load("./model/le_marca.joblib")
-le_modelo = load("./model/le_modelo.joblib")
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')  
+
 def index(request):
     with open('data/data.json') as f:
         data = json.load(f)
     items = [
         {
-            "id": index + 1,  # Generamos un ID único comenzando desde 1
+            "id": index + 1, 
             "CodInterno": item["Cod. Interno"],
             "Nombre": item["Nombre"],
             "Categoria": item["Categoria"],
@@ -37,55 +40,59 @@ def modeloGananciaCategoria(request):
 def stockCategoria(request):
     return render(request, 'stockCategoria.html')
 
+
+model = load("./model/modelo.joblib")
+le_marca = load("./model/le_marca.joblib")
+le_y = load("./model/le_y.joblib")
 def formularioClasificador(request):
+    with open('data/data.json') as f:
+        data = json.load(f)
+    data = pd.DataFrame(data)  
     if request.method == "POST":
-        # Imprimir el contenido del request.POST para depuración
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(request.POST)
-
-        # Obtener los datos del formulario
-        dinero_disponible = float(request.POST["dinero_disponible"])
-        marca = request.POST["marca"]
-        modelo = request.POST["modelo"]
-
         try:
-            # Imprimir las clases de le_marca
-            pp.pprint(f"Clases disponibles en le_marca: {le_marca.classes_}")
+            dinero_disponible = float(request.POST["dinero_disponible"])
+            marca = request.POST["marca"]
 
-            # Verificar que la marca esté en las clases
-            if marca not in le_marca.classes_:
-                error_message = f"Marca desconocida: {marca}. Las clases disponibles son: {le_marca.classes_}"
-                pp.pprint(error_message)
-                return render(request, "resultadoClasificador.html", {"error": error_message})
+            nuevo_dato = pd.DataFrame([[dinero_disponible, marca]], columns=['Precio de venta', 'Marca'])
+            nuevo_dato['Marca'] = le_marca.transform(nuevo_dato['Marca'])
 
-            # Transformar la marca
-            marca_encoded = le_marca.transform([marca])[0]  # Transformar a número
+            prediccion_categoria = model.predict(nuevo_dato)
+            categoria_solicitante = le_y.inverse_transform(prediccion_categoria)[0]
 
-            # Manejar modelo desconocido
-            if modelo not in le_modelo.classes_:
-                error_message = f"Modelo desconocido: {modelo}. Las clases disponibles son: {le_modelo.classes_}"
-                pp.pprint(error_message)
-                return render(request, "resultadoClasificador.html", {"error": error_message})
+            plt.figure(figsize=(15, 10))
+            for categoria in le_y.classes_:
+                categoria_data = data[data['Categoria'] == categoria]
+                if not categoria_data.empty:
+                    plt.scatter([categoria] * len(categoria_data), categoria_data['Precio de venta'],
+                                marker="*", s=150, label=categoria, alpha=0.6)
 
-            # Transformar el modelo
-            modelo_encoded = le_modelo.transform([modelo])[0]  # Transformar a número
+            solicitante_categoria_index = le_y.transform([categoria_solicitante])[0]
+            plt.scatter(solicitante_categoria_index, dinero_disponible, marker="P", s=250, color="green", label="Solicitante")
 
-            # Crear un nuevo DataFrame para la predicción
-            nuevo_dato = pd.DataFrame([[dinero_disponible, marca_encoded, modelo_encoded]],
-                                       columns=['Precio de venta', 'Marca', 'Modelo'])
+            plt.ylabel("Precio de venta (S/)")
+            plt.xlabel("Categoría")
+            plt.xticks(ticks=np.arange(len(le_y.classes_)), labels=le_y.classes_, rotation=45, ha='right')
+            plt.title("Distribución de Precios por Categoría")
+            plt.legend()
+            plt.grid(True)
+            plt.tight_layout()
 
-            # Hacer la predicción
-            prediccion_categoria = clasificador.predict(nuevo_dato)
-            categoria_solicitante = le_categoria.inverse_transform(prediccion_categoria)[0]
+            image_path = os.path.join("ml", "static", "images", "grafico.png")
+            
+            os.makedirs(os.path.dirname(image_path), exist_ok=True)
 
-            # Renderizar la respuesta
-            return render(request, "resultadoClasificador.html", {"response": categoria_solicitante})
+            plt.savefig(image_path)
+            plt.close()  
+
+            return render(request, "resultadoClasificador.html", {
+                "response": categoria_solicitante,
+                "grafico": image_path 
+            })
 
         except ValueError as e:
-            # Manejo de error si la transformación falla
-            error_message = f"Error al transformar marca o modelo: {e}"
-            pp.pprint(error_message)
-            return render(request, "resultadoClasificador.html", {"error": error_message})
+            return render(request, "resultadoClasificador.html", {"error": "Error en los datos de entrada."})
+        except Exception as e:
+            return render(request, "resultadoClasificador.html", {"error": "Ocurrió un error inesperado: " + str(e)})
 
-    return render(request, "resultadoClasificador.html")
+    return render(request, "clasificador.html")
 
